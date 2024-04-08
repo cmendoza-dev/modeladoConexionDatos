@@ -13,7 +13,6 @@ namespace modeladoConexionDatos
 {
     public partial class Form1 : Form
     {
-        private string cadenaConexion;
         public Form1()
         {
             InitializeComponent();
@@ -34,28 +33,24 @@ namespace modeladoConexionDatos
                 throw new ArgumentException("Por favor ingrese el servidor y la base de datos.");
             }
 
-            cadenaConexion = $"Data Source={servidor};Initial Catalog={dbname};Integrated Security=True;Encrypt=False";
+            string cadenaConexion = $"Data Source={servidor};Initial Catalog={dbname};Integrated Security=True;Encrypt=False";
 
-            using (SqlConnection cnx = new SqlConnection(cadenaConexion))
+            SqlConnection cnx = new SqlConnection(cadenaConexion);
+
+            try
             {
-                try
-                {
-                    if (chckAuth.Checked)
-                    {
-                        cnx.Open();
-                        Form2 fr2 = new Form2();
-                        fr2.Show();
-                        Hide();
-                    }
-                    else
-                    {
-                        MessageBox.Show("Activar autenticación con Windows");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Error durante la autenticación Windows: " + ex.Message);
-                }
+                cnx.Open();
+                Form2 fr2 = new Form2(cnx, "producto");
+                fr2.Show();
+                Hide();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error durante la autenticación Windows: " + ex.Message);
+            }
+            finally
+            {
+                cnx.Close(); // Cerrar la conexión
             }
         }
 
@@ -72,46 +67,14 @@ namespace modeladoConexionDatos
 
             string cadenaConexion = $"Data Source =.; Initial Catalog = tempdb; User ID = {user}; Password = {dbPass}; Encrypt = False";
 
-            using (SqlConnection cnx = new SqlConnection(cadenaConexion))
-            {
-                try
-                {
-                    cnx.Open();
-                    Form2 fr2 = new Form2();
-                    fr2.Show();
-                    Hide();
-                }
-                catch (SqlException ex)
-                {
-                    MessageBox.Show("Error durante la autenticación SQL Server: " + ex.Message);
-                }
-            }
-        }
-
-        private void btnConectar_Click(object sender, EventArgs e)
-        {
-            SqlConnection cnx = null;
+            SqlConnection cnx = new SqlConnection(cadenaConexion);
 
             try
             {
-                ConectarAuthWindows();
-                return; // Si la autenticación con Windows fue exitosa, no necesitamos continuar con la autenticación de SQL Server
-            }
-            catch (ArgumentException ex)
-            {
-                MessageBox.Show(ex.Message);
-                return;
-            }
-
-            try
-            {
-                cnx = new SqlConnection(cadenaConexion);
                 cnx.Open();
-
-                // Si llegamos aquí, la autenticación de SQL Server fue exitosa
-                Form2 fr2 = new Form2(cnx, "Negocios"); // Ajusta el nombre de la tabla según tu caso
+                Form2 fr2 = new Form2(cnx, "producto");
                 fr2.Show();
-                this.Hide();
+                Hide();
             }
             catch (SqlException ex)
             {
@@ -119,9 +82,29 @@ namespace modeladoConexionDatos
             }
             finally
             {
-                cnx?.Close(); // Asegúrate de cerrar la conexión en caso de que se haya abierto
+                cnx.Close(); // Cerrar la conexión
             }
         }
+
+        private void btnConectar_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (chckAuth.Checked)
+                {
+                    ConectarAuthWindows();
+                }
+                else
+                {
+                    ConectarAuthSQLServer();
+                }
+            }
+            catch (ArgumentException ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
 
     }
 }

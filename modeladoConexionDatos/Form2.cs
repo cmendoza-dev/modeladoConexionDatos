@@ -21,7 +21,7 @@ namespace modeladoConexionDatos
         {
             InitializeComponent();
             _connection = connection;
-            _tableName = tableName;
+           
         }
 
 
